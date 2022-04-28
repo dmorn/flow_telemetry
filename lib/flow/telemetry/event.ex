@@ -1,7 +1,8 @@
-defmodule Flow.Telemetry.StartEvent do
-  alias Flow.Telemetry.SpanEvent, as: Span
+defmodule Flow.Telemetry.Event.Start do
+  alias Flow.Telemetry.Event.Span, as: Span
+  alias Flow.Telemetry.Event.Start, as: Start
 
-  @type t :: %__MODULE__{
+  @type t :: %Start{
           start_at: integer(),
           id: nonempty_list(),
           resolution: Span.time_unit(),
@@ -13,19 +14,26 @@ defmodule Flow.Telemetry.StartEvent do
     %{system_time: start} = measurement
     %{telemetry_span_context: ref, id: id} = metadata
 
-    %__MODULE__{
+    %Start{
       start_at: start,
       id: id,
       resolution: :native,
       ref: ref
     }
   end
+
+  @spec convert_time_unit(t(), Span.time_unit()) :: t()
+  def convert_time_unit(start = %Start{resolution: from}, to) do
+    start_at = System.convert_time_unit(start.start_at, from, to)
+    %Start{start | start_at: start_at, resolution: to}
+  end
 end
 
-defmodule Flow.Telemetry.StopEvent do
-  alias Flow.Telemetry.SpanEvent, as: Span
+defmodule Flow.Telemetry.Event.Stop do
+  alias Flow.Telemetry.Event.Span, as: Span
+  alias Flow.Telemetry.Event.Stop, as: Stop
 
-  @type t :: %__MODULE__{
+  @type t :: %Stop{
           duration: integer(),
           resolution: Span.time_unit(),
           ref: Reference.t(),
@@ -37,24 +45,31 @@ defmodule Flow.Telemetry.StopEvent do
     %{duration: duration} = measurement
     %{telemetry_span_context: ref, result_count: count} = metadata
 
-    %__MODULE__{
+    %Stop{
       duration: duration,
       resolution: :native,
       result_count: count,
       ref: ref
     }
   end
+
+  @spec convert_time_unit(t(), Span.time_unit()) :: t()
+  def convert_time_unit(stop = %Stop{resolution: from}, to) do
+    duration = System.convert_time_unit(stop.duration, from, to)
+    %Stop{stop | duration: duration, resolution: to}
+  end
 end
 
-defmodule Flow.Telemetry.SpanEvent do
-  alias Flow.Telemetry.StartEvent
-  alias Flow.Telemetry.StopEvent
+defmodule Flow.Telemetry.Event.Span do
+  alias Flow.Telemetry.Event.Start
+  alias Flow.Telemetry.Event.Stop
+  alias Flow.Telemetry.Event.Span
 
   # It is https://www.erlang.org/doc/man/erlang.html#type-time_unit in reality
   # but I cannot use it.
   @type time_unit :: :second | :millisecond | :microsecond | :nanosecond | :native | :perf_counter
 
-  @type t :: %__MODULE__{
+  @type t :: %Span{
           id: nonempty_list(),
           ref: Reference.t(),
           start_at: integer(),
@@ -65,7 +80,7 @@ defmodule Flow.Telemetry.SpanEvent do
         }
   defstruct [:id, :ref, :start_at, :end_at, :duration, :result_count, :resolution]
 
-  def new(%StartEvent{} = start, %StopEvent{} = stop) do
+  def new(%Start{} = start, %Stop{} = stop) do
     if start.ref != stop.ref do
       raise ArgumentError, "start and stop event references must match"
     end
@@ -75,7 +90,7 @@ defmodule Flow.Telemetry.SpanEvent do
             "start and stop time resultions must match, have #{start.resolution} on start, #{stop.resolution} on stop"
     end
 
-    %__MODULE__{
+    %Span{
       id: start.id,
       ref: start.ref,
       start_at: start.start_at,
@@ -84,5 +99,16 @@ defmodule Flow.Telemetry.SpanEvent do
       result_count: stop.result_count,
       resolution: start.resolution
     }
+  end
+
+  @spec convert_time_unit(t(), time_unit()) :: t()
+  def convert_time_unit(span = %Span{resolution: from}, to) do
+    [start_at, duration] =
+      [span.start_at, span.duration]
+      |> Enum.map(fn x -> System.convert_time_unit(x, from, to) end)
+
+    end_at = start_at + duration
+
+    %Span{span | start_at: start_at, duration: duration, end_at: end_at, resolution: to}
   end
 end
