@@ -1,7 +1,7 @@
 defmodule Flow.Telemetry.Dispatcher do
   alias Flow.Telemetry.Collector
-  alias Flow.Telemetry.StartEvent, as: Start
-  alias Flow.Telemetry.StopEvent, as: Stop
+  alias Flow.Telemetry.Event.Start, as: Start
+  alias Flow.Telemetry.Event.Stop, as: Stop
 
   require Logger
 
