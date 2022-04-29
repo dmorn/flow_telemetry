@@ -71,14 +71,13 @@ defmodule Flow.Telemetry.Event.Span do
 
   @type t :: %Span{
           id: nonempty_list(),
-          ref: Reference.t(),
           start_at: integer(),
           end_at: integer(),
           duration: integer(),
           result_count: pos_integer(),
           resolution: time_unit()
         }
-  defstruct [:id, :ref, :start_at, :end_at, :duration, :result_count, :resolution]
+  defstruct [:id, :start_at, :end_at, :duration, :result_count, :resolution]
 
   def new(%Start{} = start, %Stop{} = stop) do
     if start.ref != stop.ref do
@@ -92,7 +91,6 @@ defmodule Flow.Telemetry.Event.Span do
 
     %Span{
       id: start.id,
-      ref: start.ref,
       start_at: start.start_at,
       end_at: start.start_at + stop.duration,
       duration: stop.duration,
