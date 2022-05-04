@@ -1,6 +1,6 @@
-defmodule Flow.Telemetry.Event.Start do
-  alias Flow.Telemetry.Event.Span, as: Span
-  alias Flow.Telemetry.Event.Start, as: Start
+defmodule TeleFlow.Event.Start do
+  alias TeleFlow.Event.Span, as: Span
+  alias TeleFlow.Event.Start, as: Start
 
   @type t :: %Start{
           start_at: integer(),
@@ -29,9 +29,9 @@ defmodule Flow.Telemetry.Event.Start do
   end
 end
 
-defmodule Flow.Telemetry.Event.Stop do
-  alias Flow.Telemetry.Event.Span, as: Span
-  alias Flow.Telemetry.Event.Stop, as: Stop
+defmodule TeleFlow.Event.Stop do
+  alias TeleFlow.Event.Span, as: Span
+  alias TeleFlow.Event.Stop, as: Stop
 
   @type t :: %Stop{
           duration: integer(),
@@ -60,10 +60,10 @@ defmodule Flow.Telemetry.Event.Stop do
   end
 end
 
-defmodule Flow.Telemetry.Event.Span do
-  alias Flow.Telemetry.Event.Start
-  alias Flow.Telemetry.Event.Stop
-  alias Flow.Telemetry.Event.Span
+defmodule TeleFlow.Event.Span do
+  alias TeleFlow.Event.Start
+  alias TeleFlow.Event.Stop
+  alias TeleFlow.Event.Span
 
   # It is https://www.erlang.org/doc/man/erlang.html#type-time_unit in reality
   # but I cannot use it.

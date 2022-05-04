@@ -1,9 +1,9 @@
-defmodule Flow.Telemetry.MixProject do
+defmodule TeleFlow.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :flow_telemetry,
+      app: :teleflow,
       version: "0.1.0",
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),

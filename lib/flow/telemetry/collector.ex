@@ -1,6 +1,6 @@
-defprotocol Flow.Telemetry.Collector do
-  alias Flow.Telemetry.{StartEvent, StopEvent}
-  alias Flow.Telemetry.Collector
+defprotocol TeleFlow.Collector do
+  alias TeleFlow.{StartEvent, StopEvent}
+  alias TeleFlow.Collector
 
   @spec handle_start(Collector.t(), StartEvent.t()) :: term()
   def handle_start(collector, event)

@@ -21,7 +21,7 @@ defmodule Support.MockCollector do
   end
 end
 
-defimpl Flow.Telemetry.Collector, for: Support.MockCollector do
+defimpl TeleFlow.Collector, for: Support.MockCollector do
   alias Support.MockCollector, as: MC
 
   def handle_start(mc, start) do

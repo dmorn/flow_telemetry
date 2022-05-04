@@ -1,7 +1,7 @@
-defmodule Flow.Telemetry.Dispatcher do
-  alias Flow.Telemetry.Collector
-  alias Flow.Telemetry.Event.Start, as: Start
-  alias Flow.Telemetry.Event.Stop, as: Stop
+defmodule TeleFlow.Dispatcher do
+  alias TeleFlow.Collector
+  alias TeleFlow.Event.Start, as: Start
+  alias TeleFlow.Event.Stop, as: Stop
 
   require Logger
 
@@ -19,7 +19,7 @@ defmodule Flow.Telemetry.Dispatcher do
         event_prefix ++ [:stop],
         event_prefix ++ [:exception]
       ],
-      &Flow.Telemetry.Dispatcher.handle_event/4,
+      &TeleFlow.Dispatcher.handle_event/4,
       collector: collector
     )
 

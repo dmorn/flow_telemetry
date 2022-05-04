@@ -1,13 +1,36 @@
-defmodule Flow.Telemetry do
+defmodule TeleFlow do
   @moduledoc """
   Instruments Flow opearations.
   """
 
-  # TODO: it would be nice now to depend on Flow itself but a Protocol defined
-  # by this library. For that we need Flow to export some introspection
-  # functions that allow us to retrieve operations and producers with the
-  # ability to substitute them.
+  @doc """
+  This function returns an instrumented flow that will send telemetry events to
+  the provided collector at each execution.
+  """
+  @spec attach(Flow.t(), TeleFlow.Collector.t(), list() | String.t()) :: Flow.t()
+  def attach(flow, collector, event_prefix) do
+    {:ok, _} = TeleFlow.Dispatcher.attach(collector, event_prefix)
+    TeleFlow.instrument(flow, event_prefix)
+  end
+
+  def attach(flow, collector) do
+    attach(flow, collector, uniq_event_prefix())
+  end
+
+  def uniq_event_prefix() do
+    :erlang.system_time()
+    |> Integer.to_string()
+    |> String.to_atom()
+    |> List.wrap()
+    |> Enum.concat([:telemetry, :flow])
+    |> Enum.reverse()
+  end
+
   def instrument(flow = %Flow{}, event_prefix) when is_list(event_prefix) do
+    # NOTE: it would be nice now to depend on Flow itself but a Protocol
+    # defined by this library. For that we need Flow to export some
+    # introspection functions that allow us to retrieve operations and
+    # producers with the ability to substitute them.
     flow
     |> walk_and_instrument(event_prefix, 0)
   end
