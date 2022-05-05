@@ -26,6 +26,7 @@ defmodule TeleFlow.MixProject do
       {:vega_lite, "~> 0.1.4"},
       # VegaLite dependency
       {:jason, "~> 1.2"},
+      {:statistex, "~> 1.0"},
       {:telemetry, "~> 1.1.0"}
     ]
   end
