@@ -23,6 +23,9 @@ defmodule TeleFlow.MixProject do
   defp deps do
     [
       {:flow, "~> 1.2.0"},
+      {:vega_lite, "~> 0.1.4"},
+      # VegaLite dependency
+      {:jason, "~> 1.2"},
       {:telemetry, "~> 1.1.0"}
     ]
   end

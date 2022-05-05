@@ -2,15 +2,18 @@ defmodule TeleFlow.Collector.FS.File do
   defstruct path: "", read_only?: false, write_agent: nil, read_device: nil
 
   alias TeleFlow.Collector.FS
+  require Logger
 
-  @max_queue_size 60_000
+  @max_queue_size 5_000
 
   def new(path, read_only? \\ false)
 
   def new(path, false) do
     opts = [:append, :binary]
     device = File.open!(path, opts)
+
     {:ok, agent} = Agent.start(fn -> %{dev: device, queue: [], queue_size: 0} end)
+
     %FS.File{path: path, write_agent: agent, read_only?: false}
   end
 
@@ -48,8 +51,12 @@ defmodule TeleFlow.Collector.FS.File do
     {event, file}
   end
 
-  def copy_read_only(%FS.File{path: path, write_agent: agent}) when agent != nil do
-    flush_queue(agent, true)
+  def copy_read_only(%FS.File{path: path, write_agent: agent}, timeout \\ :infinity) do
+    if agent != nil do
+      flush_queue(agent, true)
+      sync(agent, timeout)
+    end
+
     FS.File.new(path, true)
   end
 
@@ -60,9 +67,9 @@ defmodule TeleFlow.Collector.FS.File do
   def close(file = %FS.File{write_agent: agent}) when agent != nil do
     flush_queue(agent, true)
 
-    Agent.cast(agent, fn %{dev: dev} ->
+    Agent.cast(agent, fn state = %{dev: dev} ->
       File.close(dev)
-      %{dev: nil, queue: [], queue_size: 0}
+      %{state | dev: nil, queue: [], queue_size: 0}
     end)
 
     Agent.stop(agent)
@@ -74,17 +81,24 @@ defmodule TeleFlow.Collector.FS.File do
     close(%FS.File{file | read_device: nil})
   end
 
+  defp sync(agent, timeout), do: Agent.get(agent, fn _ -> :ok end, timeout)
+
   defp enqueue(agent, event) do
-    Agent.cast(agent, fn %{dev: dev, queue: queue, queue_size: n} ->
-      %{dev: dev, queue: [encode_event(event) | queue], queue_size: n + 1}
+    Agent.cast(agent, fn state = %{dev: dev, queue: queue, queue_size: n} ->
+      queue = [event | queue]
+      %{state | dev: dev, queue: queue, queue_size: n + 1}
     end)
   end
 
   defp flush_queue(agent, force \\ false) do
-    Agent.update(agent, fn state = %{dev: dev, queue: queue, queue_size: n} ->
+    Agent.cast(agent, fn state = %{dev: dev, queue: queue, queue_size: n} ->
       if n > @max_queue_size or force do
-        IO.binwrite(dev, Enum.reverse(queue))
-        %{dev: dev, queue: [], queue_size: 0}
+        queue
+        |> Enum.reverse()
+        |> Enum.map(&encode_event/1)
+        |> then(&IO.binwrite(dev, &1))
+
+        %{state | dev: dev, queue: [], queue_size: 0}
       else
         state
       end

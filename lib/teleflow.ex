@@ -94,7 +94,7 @@ defmodule TeleFlow do
             true -> 1
           end
 
-        {result, %{result_count: count}}
+        {result, Map.merge(%{result_count: count}, start_metadata)}
       end
     )
   end

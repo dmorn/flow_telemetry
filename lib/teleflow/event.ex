@@ -4,18 +4,20 @@ defmodule TeleFlow.Event.Start do
 
   @type t :: %Start{
           start_at: integer(),
+          monotonic_time: integer(),
           id: nonempty_list(),
           resolution: Span.time_unit(),
           ref: Reference.t()
         }
-  defstruct [:start_at, :id, :resolution, :ref]
+  defstruct [:start_at, :monotonic_time, :id, :resolution, :ref]
 
   def new(measurement, metadata) do
-    %{system_time: start} = measurement
+    %{system_time: start, monotonic_time: mono} = measurement
     %{telemetry_span_context: ref, id: id} = metadata
 
     %Start{
       start_at: start,
+      monotonic_time: mono,
       id: id,
       resolution: :native,
       ref: ref
@@ -25,7 +27,8 @@ defmodule TeleFlow.Event.Start do
   @spec convert_time_unit(t(), Span.time_unit()) :: t()
   def convert_time_unit(start = %Start{resolution: from}, to) do
     start_at = System.convert_time_unit(start.start_at, from, to)
-    %Start{start | start_at: start_at, resolution: to}
+    monotonic_time = System.convert_time_unit(start.monotonic_time, from, to)
+    %Start{start | start_at: start_at, monotonic_time: monotonic_time, resolution: to}
   end
 end
 
@@ -34,19 +37,23 @@ defmodule TeleFlow.Event.Stop do
   alias TeleFlow.Event.Stop, as: Stop
 
   @type t :: %Stop{
+          id: nonempty_list(),
           duration: integer(),
+          monotonic_time: integer(),
           resolution: Span.time_unit(),
           ref: Reference.t(),
           result_count: pos_integer()
         }
-  defstruct [:duration, :resolution, :result_count, :ref]
+  defstruct [:id, :duration, :monotonic_time, :resolution, :result_count, :ref]
 
   def new(measurement, metadata) do
-    %{duration: duration} = measurement
-    %{telemetry_span_context: ref, result_count: count} = metadata
+    %{duration: duration, monotonic_time: mono} = measurement
+    %{telemetry_span_context: ref, result_count: count, id: id} = metadata
 
     %Stop{
+      id: id,
       duration: duration,
+      monotonic_time: mono,
       resolution: :native,
       result_count: count,
       ref: ref
@@ -56,7 +63,8 @@ defmodule TeleFlow.Event.Stop do
   @spec convert_time_unit(t(), Span.time_unit()) :: t()
   def convert_time_unit(stop = %Stop{resolution: from}, to) do
     duration = System.convert_time_unit(stop.duration, from, to)
-    %Stop{stop | duration: duration, resolution: to}
+    monotonic_time = System.convert_time_unit(stop.monotonic_time, from, to)
+    %Stop{stop | duration: duration, monotonic_time: monotonic_time, resolution: to}
   end
 end
 
