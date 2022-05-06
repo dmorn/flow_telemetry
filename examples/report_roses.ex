@@ -19,8 +19,8 @@ generate_input = fn size ->
 end
 
 input =
-  Range.new(0, 1_000)
-  |> Enum.map(fn _ -> generate_input.(10_000) end)
+  Range.new(0, 500)
+  |> Enum.map(fn _ -> generate_input.(1_000) end)
 
 flow =
   input
@@ -43,5 +43,6 @@ flow
 spans = FS.stream_span_events(collector)
 
 Logger.info("Generating Report")
+report = Report.from_spans(spans, :microsecond)
 
-IO.inspect(Report.from_spans(spans))
+IO.inspect(report)
